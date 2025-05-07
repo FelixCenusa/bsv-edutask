@@ -28,8 +28,21 @@ describe('Adding todo item', () => {
       })
   })
 
-  it('creating a new task', () => {
-    
+  it('creating a new task and visiting it', () => {
+    const taskTitle = 'Learning Cypress'
+    const youtubeKey = 'BQqzfHQkREo'
+  
+    // Create task
+    cy.get('input[name="title"]').type(taskTitle)
+    cy.get('input[name="url"]').type(youtubeKey)
+    cy.get('input[type="submit"][value="Create new Task"]').click()
+  
+    // Verify it's created
+    cy.contains(taskTitle).should('exist')
+  
+    // Visit task
+    cy.contains(taskTitle).click()
+    cy.get('h1').should('contain.text', taskTitle)
   })
 
   after(function () {
@@ -39,6 +52,7 @@ describe('Adding todo item', () => {
       url: `http://localhost:5000/users/${uid}`
     }).then((response) => {
       cy.log(response.body)
+      cy.visit('http://localhost:3000')
     })
   })
 })
