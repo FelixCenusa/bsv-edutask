@@ -29,7 +29,6 @@ describe('Todo list tests', () => {
     cy.contains('div', 'Email Address').find('input[type=text]').type(email)
     cy.get('form').submit()
 
-    // Create task (idempotent due to title check or server overwrite)
     cy.get('input[name="title"]').type(taskTitle)
     cy.get('input[name="url"]').type(youtubeKey)
     cy.get('input[type="submit"][value="Create new Task"]').click()
@@ -39,21 +38,17 @@ describe('Todo list tests', () => {
   })
 
   it('does not allow creating todo with empty description', () => {
-    // Ensure the input is empty
     cy.get('form.inline-form input[type="text"]').should('have.value', '')
 
     // Ensure the Add button is disabled
     cy.get('form.inline-form input[type="submit"]').should('be.disabled')
 
-    // Count the current number of todo items (excluding the input form)
     cy.get('.todo-item')
       .then(($itemsBefore) => {
         const countBefore = $itemsBefore.length
 
-        // Try to click the Add button even though it's disabled
-        cy.get('form.inline-form input[type="submit"]').click({ force: true }) // force just to simulate the click attempt
+        cy.get('form.inline-form input[type="submit"]').click({ force: true })
 
-        // Ensure the number of todo items remains unchanged
         cy.get('.todo-item').should('have.length', countBefore)
       })
   })
@@ -64,25 +59,20 @@ describe('Todo list tests', () => {
       .then(($itemsBefore) => {
         const countBefore = $itemsBefore.length
 
-        // Ensure the input is empty
         cy.get('form.inline-form input[type="text"]').type(taskDescription)
 
-        // Ensure the Add button is disabled
         cy.get('form.inline-form input[type="submit"]').should('be.enabled').click()
 
-        // Ensure the number of todo items increased by 1
         cy.get('.todo-item').should('have.length', countBefore + 1)
 
-        // Assert that the last todo in the list matches the added description
         cy.get('.todo-item').last().should('contain.text', taskDescription)
 
-        // Assert that the new todo item is not marked as done
+        // Assert that the new todo item is not marked as done (active)
         cy.get('.todo-item').last().within(() => {
-          cy.get('.checker').should('not.have.class', 'checked') // not done
+          cy.get('.checker').should('not.have.class', 'checked')
           cy.get('.editable')
             .should('exist')
             .and(($el) => {
-              // Ensure it's not struck through (no line-through)
               expect($el).to.have.css('text-decoration-line', 'none')
             })
         })
@@ -95,10 +85,9 @@ describe('Todo list tests', () => {
       cy.get('.checker').should('not.have.class', 'checked')
       cy.get('.editable').should('have.css', 'text-decoration-line', 'none')
   
-      // Click the checker
       cy.get('.checker').click()
   
-      // Now it should be marked as done
+      // Checks for if it is done
       cy.get('.checker').should('have.class', 'checked')
       cy.get('.editable').should('have.css', 'text-decoration-line', 'line-through')
     })
@@ -109,14 +98,13 @@ describe('Todo list tests', () => {
       // Precondition: ensure it is done
       cy.get('.checker').then(($checker) => {
         if (!$checker.hasClass('checked')) {
-          cy.wrap($checker).click() // set it to done first
+          cy.wrap($checker).click()
         }
       })
   
       cy.get('.checker').should('have.class', 'checked')
       cy.get('.editable').should('have.css', 'text-decoration-line', 'line-through')
   
-      // Click again to toggle back to active
       cy.get('.checker').click()
   
       cy.get('.checker').should('not.have.class', 'checked')
@@ -125,24 +113,19 @@ describe('Todo list tests', () => {
   })
 
   it('deletes the todo item when the remover (x) symbol is clicked', () => {
-    // Make sure the todo item exists
     cy.get('.todo-item').last().within(() => {
       cy.get('.editable').should('contain.text', 'Watch the video to learn Cypress')
     })
   
-    // Count the current number of todo items
     cy.get('.todo-item').then(($itemsBefore) => {
       const countBefore = $itemsBefore.length
   
-      // Click the remover symbol on the last todo
       cy.get('.todo-item').last().within(() => {
         cy.get('.remover').click()
       })
   
-      // Ensure the number of todo items decreased by 1
       cy.get('.todo-item').should('have.length', countBefore - 1)
   
-      // Ensure the deleted item is no longer present
       cy.get('.todo-item').each(($el) => {
         cy.wrap($el).should('not.contain.text', 'Watch the video to learn Cypress')
       })
