@@ -1,7 +1,6 @@
 describe('Todo list tests', () => {
   // define variables that we need on multiple occasions
   let uid // user id
-  let name // name of the user (firstName + ' ' + lastName)
   let email // email of the user
   const taskTitle = 'Learning Cypress'
   const youtubeKey = 'BQqzfHQkREo'
@@ -18,7 +17,6 @@ describe('Todo list tests', () => {
           body: user
         }).then((response) => {
           uid = response.body._id.$oid
-          name = user.firstName + ' ' + user.lastName
           email = user.email
         })
       })
@@ -28,9 +26,7 @@ describe('Todo list tests', () => {
     cy.viewport(1200, 1600);
     // Visit and log in before each test
     cy.visit('http://localhost:3000')
-    cy.contains('div', 'Email Address')
-      .find('input[type=text]')
-      .type(email)
+    cy.contains('div', 'Email Address').find('input[type=text]').type(email)
     cy.get('form').submit()
 
     // Create task (idempotent due to title check or server overwrite)
@@ -125,6 +121,31 @@ describe('Todo list tests', () => {
   
       cy.get('.checker').should('not.have.class', 'checked')
       cy.get('.editable').should('have.css', 'text-decoration-line', 'none')
+    })
+  })
+
+  it('deletes the todo item when the remover (x) symbol is clicked', () => {
+    // Make sure the todo item exists
+    cy.get('.todo-item').last().within(() => {
+      cy.get('.editable').should('contain.text', 'Watch the video to learn Cypress')
+    })
+  
+    // Count the current number of todo items
+    cy.get('.todo-item').then(($itemsBefore) => {
+      const countBefore = $itemsBefore.length
+  
+      // Click the remover symbol on the last todo
+      cy.get('.todo-item').last().within(() => {
+        cy.get('.remover').click()
+      })
+  
+      // Ensure the number of todo items decreased by 1
+      cy.get('.todo-item').should('have.length', countBefore - 1)
+  
+      // Ensure the deleted item is no longer present
+      cy.get('.todo-item').each(($el) => {
+        cy.wrap($el).should('not.contain.text', 'Watch the video to learn Cypress')
+      })
     })
   })
 
