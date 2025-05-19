@@ -44,18 +44,32 @@ def test_no_user_returns_none(controller, fake_dao):
     assert controller.get_user_by_email("ghost@nowhere.net") is None
 
 
-#  More than one match  ->  prints warning, returns first
-def test_two_users_prints_warning_and_returns_first(controller, fake_dao, capsys):
+#  More than one match  ->  (i) prints warning  (ii) returns first user
+
+def _set_two_duplicate_users(fake_dao):
     fake_dao.find.return_value = [
         {"_id": "id1", "email": "dupe@example.com"},
         {"_id": "id2", "email": "dupe@example.com"},
     ]
 
-    first = controller.get_user_by_email("dupe@example.com")
+def test_two_users_prints_warning(controller, fake_dao, capsys):
+    """Should print a warning when duplicates are found."""
+    _set_two_duplicate_users(fake_dao)
+
+    controller.get_user_by_email("dupe@example.com")
     out = capsys.readouterr().out
 
     assert re.search(r"more than one user.*dupe@example\.com", out, re.I)
+
+
+def test_two_users_returns_first(controller, fake_dao):
+    """Should return the first matching user when duplicates exist."""
+    _set_two_duplicate_users(fake_dao)
+
+    first = controller.get_user_by_email("dupe@example.com")
+
     assert first["_id"] == "id1"
+
 
 
 #  Bad e-mail formats  ->  should raise ValueError   (validator too weak => xfail)
